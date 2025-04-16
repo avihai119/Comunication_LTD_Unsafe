@@ -21,7 +21,7 @@ async function handleChangePassword(req, res) {
       .send(inject('All fields are required (email, current password, new password).'))
   }
 
-  // Fetch user
+  // Fetch user #fix: using raw input from user into database, vulernable to sql injection (need to do escaping here)
   const user = await db.user.findUnique({ where: { email } })
   if (!user) {
     return res.status(400).send(inject('User not found.'))
@@ -49,14 +49,29 @@ async function handleChangePassword(req, res) {
   const historyLimit = config.historyLimit || 3
 
   const isReused = (user.passwordHistory || []).some((old) => {
-    const [oldSalt] = old.split(':')
-    return hashPassword(newPassword, oldSalt) === old
+    //console.log(old)
+    const [oldSalt] = old.split(':') //takes the old salt from old password array
+    //console.log(oldSalt)
+    //const [oldHashedPassword] = old.split(':')
+    //console.log(oldHashedPassword)
+    //console.log(hashPassword(newPassword,oldSalt))
+    const returnConsoleHashedPassword = hashPassword(newPassword, oldSalt) //computes the hashed password
+    const returnSaltedHash = `${oldSalt}:${returnConsoleHashedPassword}` //combines the salt and hashed password
+    return returnSaltedHash === old
   })
-
-  if (isReused) {
+  const newPasswordHashed = hashPassword(newPassword,salt)
+  const SameSaltedHash = `${salt}:${newPasswordHashed}`
+  isReusedSamePassword = (SameSaltedHash === user.password) 
+  console.log(SameSaltedHash)
+  console.log(currentPassword)
+  console.log(isReusedSamePassword)
+  if (isReused) {//If user reuses his last 3 passwords
     return res.status(400).send(inject(`You cannot reuse your last ${historyLimit} password(s).`))
   }
-
+  if (isReusedSamePassword) //If user enters his current password into new one
+  {
+    return res.status(400).send(inject(`You cannot use your current password.`))
+  }
   // Hash new password and update history
   const newSalt = crypto.randomBytes(16).toString('hex')
   const newHashed = hashPassword(newPassword, newSalt)
