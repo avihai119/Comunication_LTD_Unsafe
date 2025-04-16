@@ -1,8 +1,8 @@
 {
-  "passwordLength": 6,
+  "passwordLength": 5,
   "requireUppercase": false,
   "requireLowercase": false,
-  "requireDigits": false,
+  "requireDigits": true,
   "requireSpecial": false,
   "historyLimit": 3,
   "forbiddenWords": [

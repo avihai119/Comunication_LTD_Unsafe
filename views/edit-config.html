@@ -46,6 +46,12 @@
     </script>
   </head>
   <body>
+    <nav style="background: #f0f0f0; padding: 1rem">
+      <a href="/">Home</a> | <a href="/register">Register</a> | <a href="/login">Login</a> |
+      <a href="/dashboard">Dashboard</a> | <a href="/config">Config</a> |
+      <a href="/forgot-password">Forgot Password</a> |
+      <a href="/change-password">Change Password</a>
+    </nav>
     <h1>Edit Security Configuration</h1>
     <form onsubmit="handleSubmit(event)">
       <label>Password Length: <input name="passwordLength" type="number" /></label><br />
@@ -56,7 +62,10 @@
       ><br />
       <label>Password History Limit: <input name="historyLimit" type="number" /></label><br />
       <label>Forbidden Words (comma separated): <input name="forbiddenWords" /></label><br />
-      <label>Login Attempts Limit (Then suspended for 30 minute): <input name="loginAttemptsLimit" type="number" /></label><br />
+      <label
+        >Login Attempts Limit (Then suspended for 30 minute):
+        <input name="loginAttemptsLimit" type="number" /></label
+      ><br />
       <button type="submit">Save</button>
     </form>
   </body>
