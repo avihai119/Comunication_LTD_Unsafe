@@ -31,3 +31,5 @@ model Client {
   createdBy   User?    @relation(fields: [createdById], references: [id])
   createdById Int?
 }
+
+// HI!
