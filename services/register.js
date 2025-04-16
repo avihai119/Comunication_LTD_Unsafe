@@ -40,3 +40,5 @@ async function handleRegister(req, res) {
 }
 
 module.exports = { handleRegister }
+
+// salt : password 96a818f48558969880ac26bce37c8fb2:3d0be160e82b8f91cb231f18d1e2943d0842c52bb3ee54eb7be91a5dc7daa3f3
