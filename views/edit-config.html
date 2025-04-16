@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Edit Security Config</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script>
+      async function loadConfig() {
+        const res = await fetch('/config/data')
+        const config = await res.json()
+        for (const key in config) {
+          const input = document.querySelector(`[name="${key}"]`)
+          if (input) {
+            if (typeof config[key] === 'boolean') {
+              input.checked = config[key]
+            } else if (Array.isArray(config[key])) {
+              input.value = config[key].join(', ')
+            } else {
+              input.value = config[key]
+            }
+          }
+        }
+      }
+
+      function handleSubmit(event) {
+        event.preventDefault()
+        const form = event.target
+        const data = {
+          passwordLength: parseInt(form.passwordLength.value),
+          requireUppercase: form.requireUppercase.checked,
+          requireLowercase: form.requireLowercase.checked,
+          requireDigits: form.requireDigits.checked,
+          requireSpecial: form.requireSpecial.checked,
+          historyLimit: parseInt(form.historyLimit.value),
+          forbiddenWords: form.forbiddenWords.value.split(',').map((x) => x.trim()),
+          loginAttemptsLimit: parseInt(form.loginAttemptsLimit.value),
+        }
+        fetch('/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        }).then(() => alert('Configuration updated!'))
+      }
+
+      window.onload = loadConfig
+    </script>
+  </head>
+  <body>
+    <h1>Edit Security Configuration</h1>
+    <form onsubmit="handleSubmit(event)">
+      <label>Password Length: <input name="passwordLength" type="number" /></label><br />
+      <label><input type="checkbox" name="requireUppercase" /> Require Uppercase</label><br />
+      <label><input type="checkbox" name="requireLowercase" /> Require Lowercase</label><br />
+      <label><input type="checkbox" name="requireDigits" /> Require Digits</label><br />
+      <label><input type="checkbox" name="requireSpecial" /> Require Special Characters</label
+      ><br />
+      <label>Password History Limit: <input name="historyLimit" type="number" /></label><br />
+      <label>Forbidden Words (comma separated): <input name="forbiddenWords" /></label><br />
+      <label>Login Attempts Limit (Then suspended for 30 minute): <input name="loginAttemptsLimit" type="number" /></label><br />
+      <button type="submit">Save</button>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "passwordLength": 6,
+  "requireUppercase": false,
+  "requireLowercase": false,
+  "requireDigits": false,
+  "requireSpecial": false,
+  "historyLimit": 3,
+  "forbiddenWords": [
+    "password",
+    "123456",
+    "12345678",
+    "qwerty",
+    "abc123",
+    "letmein",
+    "welcome",
+    "iloveyou",
+    "admin",
+    "login",
+    "monkey",
+    "dragon",
+    "football",
+    "baseball",
+    "sunshine",
+    "princess",
+    "trustno1",
+    "password1",
+    "123456789",
+    "master"
+  ],
+  "loginAttemptsLimit": 3
+}
