@@ -1,7 +1,7 @@
 {
-  "passwordLength": 5,
-  "requireUppercase": false,
-  "requireLowercase": false,
+  "passwordLength": 10,
+  "requireUppercase": true,
+  "requireLowercase": true,
   "requireDigits": true,
   "requireSpecial": false,
   "historyLimit": 3,
