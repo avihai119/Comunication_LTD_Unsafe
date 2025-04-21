@@ -1,7 +1,7 @@
 // utils/email.js
 const nodemailer = require('nodemailer')
 require('dotenv').config()
-
+const { db } = require('../db/db')
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: parseInt(process.env.EMAIL_PORT),
@@ -20,7 +20,16 @@ async function sendResetEmail(to, code) {
     html: `<p>Your password reset code is: <b>${code}</b></p>`,
   })
   console.log(`Email sent to ${to} with code ${code}`);
-  
+  setTimeout(function(){myFunction(to)}, 10000); //change this to 600000 for it to be 10 minutes
 }
+
+async function myFunction(email) {
+    await db.user.update({
+      where: { email },
+      data: { resetCode: null },
+    })
+    console.log("code deleted after 10 seconds have passed") //change this to 10 minutes
+  }
+
 
 module.exports = { sendResetEmail }
