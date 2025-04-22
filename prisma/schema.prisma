@@ -15,9 +15,6 @@ model User {
   password        String
   resetCode       String?
   passwordHistory String[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  Client          Client[]
 }
 
 model Client {
@@ -27,9 +24,4 @@ model Client {
   phone       String?
   address     String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   User?    @relation(fields: [createdById], references: [id])
-  createdById Int?
 }
-
-// HI!reut
