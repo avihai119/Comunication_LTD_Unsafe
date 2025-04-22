@@ -7,6 +7,7 @@ const { handleForgotPassword } = require('../services/forgotPassword')
 const { handleResetPassword } = require('../services/resetPassword')
 const { handleChangePassword } = require('../services/changePassword')
 
+//router.post('/index',handleLogin)
 router.post('/register', handleRegister)
 router.post('/login', handleLogin)
 router.post('/forgot-password', handleForgotPassword)

@@ -9,7 +9,9 @@ const config = getSecurityConfig();
 const MAX_ATTEMPTS = config.loginAttemptsLimit;
 const LOCK_DURATION = 30 * 60 * 1000;
 const loginAttempts = {}; // memory-only
-const loginPath = path.join(__dirname, '../views/login.html');
+//const loginPath = path.join(__dirname, '../views/login.html');
+const loginPath = path.join(__dirname, '../public/index.html');
+
 
 async function handleLogin(req, res) {
   const { username, password } = req.body;
@@ -69,7 +71,8 @@ async function handleLogin(req, res) {
   }
 
   loginAttempts[username] = { count: 0, lastFailed: 0 };
-  return res.send(inject(`<p style="color:green;">Login successful!</p>`));
+  //return res.send(inject(`<p style="color:green;">Login successful!</p>`));
+  return res.redirect('/dashboard');
 }
 
 module.exports = { handleLogin };

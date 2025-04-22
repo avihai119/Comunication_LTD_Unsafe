@@ -7,13 +7,28 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <nav style="background: #f0f0f0; padding: 1rem">
-      <a href="/">Home</a> | <a href="/register">Register</a> | <a href="/login">Login</a> |
-      <a href="/dashboard">Dashboard</a> | <a href="/config">Config</a> |
-      <a href="forgot-password">Forgot Password</a> |
-      <a href="change-password">Change Password</a>
-    </nav>
 
     <h1>Welcome to Comunication_LTD</h1>
+
+    <div id="feedback"></div>
+    <form action="/auth/login" method="post">
+      <span id="countdown" data-seconds="${seconds}"></span>
+      <input name="username" placeholder="Username" required />
+      <input name="password" type="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+
+     
+  <div style="margin-top: 1rem;">
+    <a href="/register">
+      <button type="button">Create an Account</button>
+    </a>
+
+    <a href="/change-password">
+      <button type="button">Change password</button>
+    </a>
+
+  </div>
+
   </body>
 </html>
