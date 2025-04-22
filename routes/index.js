@@ -12,5 +12,6 @@ router.get('/login', (req, res) => res.sendFile(view('index.html')))
 router.get('/dashboard', (req, res) => res.sendFile(view('dashboard.html')))
 router.get('/forgot-password', (req, res) => res.sendFile(view('forgot-password.html')))
 router.get('/change-password', (req, res) => res.sendFile(view('change-password.html')))
+router.get('dashboard', (req, res) => res.sendFile(view('dashboard.html')))
 
 module.exports = router

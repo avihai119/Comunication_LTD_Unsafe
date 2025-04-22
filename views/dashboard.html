@@ -11,15 +11,17 @@
   </nav>
   
   <h1>Admin Dashboard</h1>
-  <form action="/clients/new" method="post">
-    <input name="clientName" placeholder="Client Name" required />
-    <input name="sector" placeholder="Sector" />
-    <input name="package" placeholder="Package Type" />
+
+  <div id="feedback"></div>
+
+  <form action="/auth/add-client" method="post">
+    <input name="name" placeholder="Client Name" required />
+    <input name="email" placeholder="Client Email" required />
+    <input name="phone" placeholder="Client Phone" />
+    <input name="address" placeholder="Client Address" />
     <button type="submit">Add Client</button>
   </form>
 
-  <div id="result">
-    <!-- New client name can be rendered here after submission -->
-  </div>
+  <div id="result"></div>
 </body>
 </html>
