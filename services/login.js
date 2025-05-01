@@ -12,10 +12,31 @@ const loginAttempts = {}; // memory-only
 //const loginPath = path.join(__dirname, '../views/login.html');
 const loginPath = path.join(__dirname, '../public/index.html');
 
+// ── ADDED: Whitelist & escaping helpers ─────────────────
+const WHITELIST = /^[A-Za-z0-9 _@.\-]+$/;
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+// ── END ADDED ─────────────────────────────────────────
 
 async function handleLogin(req, res) {
   const { username, password } = req.body;
   const rawHtml = fs.readFileSync(loginPath, 'utf-8');
+
+  // Whitelist + length check on username
+  if (!WHITELIST.test(username) || username.length > 30) {
+    return res.status(400).send(
+      injectFeedback(
+        rawHtml,
+        `<p style="color:red;">Login failed.</p>`
+      )
+    );
+  }
 
   const inject = (html) =>
     injectFeedback(
