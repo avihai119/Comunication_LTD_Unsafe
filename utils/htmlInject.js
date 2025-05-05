@@ -8,4 +8,15 @@ function injectValues(html, { username = '', email = '' }) {
     .replace('name="email"', `name="email" value="${email}"`)
 }
 
-module.exports = { injectFeedback, injectValues }
+const WHITELIST = /^[A-Za-z0-9 _@.\-]+$/
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+module.exports = { injectFeedback, injectValues, escapeHtml, WHITELIST }
