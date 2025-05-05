@@ -4,31 +4,19 @@ const { db } = require('../db/db');
 const { hashPassword } = require('../utils/password');
 const { injectFeedback } = require('../utils/htmlInject');
 const { getSecurityConfig } = require('../config/security');
+const { escapeHtml, WHITELIST } = require('../utils/htmlInject');
 
 const config = getSecurityConfig();
 const MAX_ATTEMPTS = config.loginAttemptsLimit;
 const LOCK_DURATION = 30 * 60 * 1000;
 const loginAttempts = {}; // memory-only
-//const loginPath = path.join(__dirname, '../views/login.html');
 const loginPath = path.join(__dirname, '../public/index.html');
 
-// ── ADDED: Whitelist & escaping helpers ─────────────────
-const WHITELIST = /^[A-Za-z0-9 _@.\-]+$/;
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-// ── END ADDED ─────────────────────────────────────────
 
 async function handleLogin(req, res) {
   const { username, password } = req.body;
   const rawHtml = fs.readFileSync(loginPath, 'utf-8');
 
-  // Whitelist + length check on username
   if (!WHITELIST.test(username) || username.length > 30) {
     return res.status(400).send(
       injectFeedback(
@@ -38,14 +26,17 @@ async function handleLogin(req, res) {
     );
   }
 
+  const escapedUsername = escapeHtml(username);
   const inject = (html) =>
     injectFeedback(
-      rawHtml.replace('name="username"', `name="username" value="${username}"`),
+      rawHtml.replace('name="username"', `name="username" value="${escapedUsername}"`),
       html
     );
 
   const user = await db.user.findUnique({ where: { username } });
-  if (!user) return res.status(400).send(inject('<p style="color:red;">User not found.</p>'));
+  if (!user) {
+    return res.status(400).send(inject('<p style="color:red;">User not found.</p>'));
+  }
 
   const now = Date.now();
   const record = loginAttempts[username] || { count: 0, lastFailed: 0 };
@@ -85,14 +76,15 @@ async function handleLogin(req, res) {
     loginAttempts[username] = { count: newCount, lastFailed: now };
     const left = MAX_ATTEMPTS - newCount;
     return res.status(400).send(
-      inject(`<p style="color:red;">Invalid password. ${
-        left > 0 ? `${left} attempt(s) left.` : 'You are now locked out for 30 minutes.'
-      }</p>`)
+      inject(
+        `<p style="color:red;">Invalid password. ${
+          left > 0 ? `${left} attempt(s) left.` : 'You are now locked out for 30 minutes.'
+        }</p>`
+      )
     );
   }
 
   loginAttempts[username] = { count: 0, lastFailed: 0 };
-  //return res.send(inject(`<p style="color:green;">Login successful!</p>`));
   return res.redirect('/dashboard');
 }
 

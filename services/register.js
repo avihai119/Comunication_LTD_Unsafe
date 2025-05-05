@@ -4,22 +4,13 @@ const crypto = require('crypto')
 const { db } = require('../db/db')
 const { validatePassword, hashPassword } = require('../utils/password')
 const { injectFeedback, injectValues } = require('../utils/htmlInject')
+const { escapeHtml, WHITELIST } = require('../utils/htmlInject')
 
 const registerPath = path.join(__dirname, '../views/register.html')
 
 async function handleRegister(req, res) {
   const rawHtml = fs.readFileSync(registerPath, 'utf-8')
 
-  // ── ADDED: Whitelist & escaping helpers ─────────────────────
-  const WHITELIST = /^[A-Za-z0-9 _@.\-]+$/
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-  }
   function validUsername(u) {
     return typeof u === 'string' && u.length > 0 && u.length <= 30 && WHITELIST.test(u)
   }
@@ -31,12 +22,10 @@ async function handleRegister(req, res) {
   function validPasswordChars(p) {
     return typeof p === 'string' && p.length > 0 && p.length <= 50 && WHITELIST.test(p)
   }
-  // ── END ADDED ────────────────────────────────────────────────
 
   const { username, email, password } = req.body
   const inject = html =>
     injectFeedback(
-      // ── ADDED: inject escaped values ─────────────────────────
       injectValues(
         rawHtml,
         { 
@@ -47,22 +36,10 @@ async function handleRegister(req, res) {
       html
     )
 
-      // ── DEBUG: Log validation results (remove after diagnosis)
-  console.log('[Register Debug]', {
-    username,
-    usernameValid: validUsername(username),
-    email,
-    emailValid: validEmail(email),
-    passwordValid: validPasswordChars(password)
-  });
-
-
-  // ── ADDED: Input format checks ─────────────────────────────
   if (!validUsername(username) || !validEmail(email) || !validPasswordChars(password)) {
     const msg = '<p style="color:red;">Registration failed.</p>'
     return res.status(400).send(inject(msg))
   }
-  // ── END ADDED ───────────────────────────────────────────────
 
   // 1) Password policy
   const errors = validatePassword(password)
