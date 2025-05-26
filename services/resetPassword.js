@@ -1,4 +1,3 @@
-// services/resetPassword.js
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
@@ -30,16 +29,17 @@ async function handleResetPassword(req, res) {
     return res.status(400).send(inject(errors.join('<br>')))
   }
 
-  const salt = crypto.randomBytes(16).toString('hex')
-  const hashed = hashPassword(newPassword, salt)
-  const saltedHash = `${salt}:${hashed}`
+  if (user.resetCode === code) {
+    const salt = crypto.randomBytes(16).toString('hex')
+    const hashed = hashPassword(newPassword, salt)
+    const saltedHash = `${salt}:${hashed}`
 
-  await db.user.update({
-    where: { email },
-    data: { password: saltedHash, resetCode: null },
-  })
-
-  return res.send(inject('Password reset successful.', 'green'))
+    await db.user.update({
+      where: { email },
+      data: { password: saltedHash, resetCode: null },
+    })
+    return res.send(inject('Password reset successful.', 'green'))
+  }
 }
 
 module.exports = { handleResetPassword }

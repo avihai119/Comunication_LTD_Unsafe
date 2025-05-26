@@ -1,4 +1,3 @@
-// services/forgotPassword.js
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
@@ -34,8 +33,8 @@ async function handleForgotPassword(req, res) {
 
   const successHtml = html.replace(
     '<div id="feedback"></div>',
-    `<div id="feedback"><p style="color:green;">Reset code sent to your email.</p> <p>The Code Is: ${code} for email: ${email}</p> 
-     </p> </div>`
+    `<div id="feedback"><p style="color:green;">Reset code sent to your email: ${email}</p>
+     </div>`
   )
 
   res.send(successHtml)
