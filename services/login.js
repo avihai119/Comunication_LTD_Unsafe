@@ -1,8 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 const { db } = require('../db/db')
-const { hashPassword } = require('../utils/password')
-const { injectFeedback } = require('../utils/htmlInject')
+const { hashPassword, validatePassword } = require('../utils/password')
+const { injectFeedback, escapeHtml } = require('../utils/htmlInject')
 const { getSecurityConfig } = require('../config/security')
 
 const config = getSecurityConfig()
@@ -15,20 +15,30 @@ const loginPath = path.join(__dirname, '../public/index.html')
 async function handleLogin(req, res) {
   const { username, password } = req.body
   const rawHtml = fs.readFileSync(loginPath, 'utf-8');
-  
-  // XSS vulnerability - no HTML escaping for username
+
+  // Prevent XSS using escapeHtml
+  const escapedUsername = escapeHtml(username)
   const inject = (html) =>
     injectFeedback(
-      rawHtml.replace('name="username"', `name="username" value="${username}"`),
+      rawHtml.replace('name="username"', `name="username" value="${escapedUsername}"`),
       html
     )
 
+  // Password format validation (doesn't prevent SQLi)
+  const validationErrors = validatePassword(password)
+  if (validationErrors.length > 0) {
+    return res.status(400).send(
+      inject(`<ul style="color:red;">${validationErrors.map(e => `<li>${e}</li>`).join('')}</ul>`)
+    )
+  }
+
   try {
-    // VULNERABLE SQLi: Raw SQL query instead of Prisma
+    // SQL Injection vulnerability on purpose
     const unsafeQuery = `SELECT * FROM "User" WHERE "username" = '${username}'`
+    console.log(unsafeQuery)
     const userResult = await db.$queryRawUnsafe(unsafeQuery)
-    const user = userResult[0] // Get first result
-    
+    const user = userResult[0]
+
     if (!user) {
       return res
         .status(400)
@@ -37,7 +47,7 @@ async function handleLogin(req, res) {
 
     const now = Date.now()
     const record = loginAttempts[username] || { count: 0, lastFailed: 0 }
-    
+
     if (record.count >= MAX_ATTEMPTS && now - record.lastFailed < LOCK_DURATION) {
       return res
         .status(403)
@@ -50,7 +60,7 @@ async function handleLogin(req, res) {
 
     const [salt, storedHash] = user.password.split(':')
     const inputHash = hashPassword(password, salt)
-    
+
     if (inputHash !== storedHash) {
       loginAttempts[username] = { count: record.count + 1, lastFailed: now }
       return res
@@ -61,12 +71,11 @@ async function handleLogin(req, res) {
     // Reset login attempts on successful login
     loginAttempts[username] = { count: 0, lastFailed: 0 }
     return res.redirect('/dashboard')
-    
+
   } catch (error) {
-    // Expose SQL errors (another vulnerability)
     return res
-      .status(400)
-      .send(inject(`<p style="color:red;">Database error: ${error.message}</p>`))
+      .status(500)
+      .send(inject(`<p style="color:red;">Unexpected server error.</p>`))
   }
 }
 
