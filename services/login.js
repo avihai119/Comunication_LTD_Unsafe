@@ -34,6 +34,7 @@ async function handleLogin(req, res) {
 
   try {
     // SQL Injection vulnerability on purpose
+    //const unsafeQuery = `SELECT * FROM "User" WHERE "username" = '${username}' AND "password" = '${password}'`
     const unsafeQuery = `SELECT * FROM "User" WHERE "username" = '${username}'`
     console.log(unsafeQuery)
     const userResult = await db.$queryRawUnsafe(unsafeQuery)
@@ -61,12 +62,12 @@ async function handleLogin(req, res) {
     const [salt, storedHash] = user.password.split(':')
     const inputHash = hashPassword(password, salt)
 
-    if (inputHash !== storedHash) {
+    /*if (inputHash !== storedHash) {
       loginAttempts[username] = { count: record.count + 1, lastFailed: now }
       return res
         .status(400)
         .send(inject('<p style="color:red;">Username or password is incorrect.</p>'))
-    }
+    }*/
 
     // Reset login attempts on successful login
     loginAttempts[username] = { count: 0, lastFailed: 0 }
