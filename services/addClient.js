@@ -14,7 +14,6 @@ async function handleAddClient(req, res) {
     return res.status(400).send(injectFeedback(injectValues(rawHtml, { name, email, phone, address }), msg))
   }
 
-  // Unsafe email check with SQL injection vulnerability
   const unsafeEmailCheck = `SELECT * FROM "Client" WHERE "email" = '${email}'`
   console.log("Unsafe email check:", unsafeEmailCheck)
   const result = await db.$queryRawUnsafe(unsafeEmailCheck)
@@ -28,7 +27,6 @@ async function handleAddClient(req, res) {
     return String(str).replace(/'/g, "''")
   }
 
-  // Insert data insecurely (vulnerable to SQL injection)
 const unsafeInsert = `
   INSERT INTO "Client" ("name", "email", "phone", "address")
   VALUES ('${sqlEscape(name)}', '${sqlEscape(email)}', '${sqlEscape(phone)}', '${sqlEscape(address)}')
