@@ -1,65 +1,105 @@
-const fs = require('fs')
-const path = require('path')
-const crypto = require('crypto')
-const { db } = require('../db/db')
-const { validatePassword, hashPassword } = require('../utils/password')
-const { injectFeedback, injectValues, escapeHtml } = require('../utils/htmlInject')
+// services/register.js
+const fs     = require('fs');
+const path   = require('path');
+const crypto = require('crypto');
+const { db } = require('../db/db');
+const { validatePassword, hashPassword } = require('../utils/password');
+const {
+  WHITELIST,
+  escapeHtml,
+  injectValues,
+  injectFeedback
+} = require('../utils/htmlInject');
 
-const registerPath = path.join(__dirname, '../views/register.html')
+const viewPath = path.join(__dirname, '../views/register.html');
 
 async function handleRegister(req, res) {
-  const { username, email, password } = req.body
-  const rawHtml = fs.readFileSync(registerPath, 'utf-8')
+  const rawHtml = fs.readFileSync(viewPath, 'utf-8');
+  const { username, email, password } = req.body;
 
-  // Escape inputs to avoid XSS
-  const escapedUsername = escapeHtml(username)
-  const escapedEmail = escapeHtml(email)
-
-  const errors = validatePassword(password)
-  if (errors.length > 0) {
-    const msg = `<ul style="color:red;">${errors.map((e) => `<li>${e}</li>`).join('')}</ul>`
-    return res
-      .status(400)
-      .send(injectFeedback(injectValues(rawHtml, { username: escapedUsername, email: escapedEmail }), msg))
+  // Helper to repopulate form and inject feedback
+  function render(values, msgHtml) {
+    const filled = injectValues(rawHtml, values);
+    return injectFeedback(filled, msgHtml);
   }
 
-  // SQL Injection vulnerability intentionally left in
-  try {
-    const unsafeQuery = `SELECT * FROM "User" WHERE "username" = '${username}' OR "email" = '${email}'`
-    console.log(unsafeQuery)
-    const existsResult = await db.$queryRawUnsafe(unsafeQuery)
+  // A) Required fields
+  if (!username || !email || !password) {
+    return res
+      .status(400)
+      .send(render(
+        { username, email, password },
+        '<p style="color:red;">All fields are required.</p>'
+      ));
+  }
 
-    if (existsResult.length > 0) {
+  // B) Whitelist, length & basic email-format validation
+  const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  if (
+    username.length > 30   || !WHITELIST.test(username) ||
+    email.length > 50      || !WHITELIST.test(email)    || !EMAIL_REGEX.test(email) ||
+    password.length > 50   || !WHITELIST.test(password)
+  ) {
+    return res
+      .status(400)
+      .send(render(
+        { username, email, password: '' },
+        '<p style="color:red;">Registration failed due to invalid input format.</p>'
+      ));
+  }
+
+  // C) Password policy
+  const errors = validatePassword(password);
+  if (errors.length > 0) {
+    const list = `<ul style="color:red;">${
+      errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')
+    }</ul>`;
+    return res
+      .status(400)
+      .send(render(
+        { username, email, password: '' },
+        list
+      ));
+  }
+
+  try {
+    // D) Uniqueness check - VULNERABLE to SQL injection
+    const checkQuery = `SELECT * FROM "User" WHERE "username" = '${username}' OR "email" = '${email}'`;
+    console.log('Uniqueness check query:', checkQuery);
+    const existingUsers = await db.$queryRawUnsafe(checkQuery);
+    
+    if (existingUsers.length > 0) {
       return res
         .status(400)
-        .send(
-          injectFeedback(
-            injectValues(rawHtml, { username: escapedUsername, email: escapedEmail }),
-            `<p style="color:red;">Username or email already exists.</p>`
-          )
-        )
+        .send(render(
+          { username, email, password: '' },
+          '<p style="color:red;">Username or email already exists.</p>'
+        ));
     }
-  } catch (error) {
+
+    // E) Create user - VULNERABLE to SQL injection
+    // For educational purposes, storing password as plain text to match login logic
+    // In real vulnerable apps, this might still be hashed but the query is injectable
+    const insertQuery = `INSERT INTO "User" ("username", "email", "password") VALUES ('${username}', '${email}', '${password}')`;
+    console.log('Insert query:', insertQuery);
+    await db.$executeRawUnsafe(insertQuery);
+
+    // F) Success feedback
     return res
-      .status(400)
-      .send(
-        injectFeedback(
-          injectValues(rawHtml, { username: escapedUsername, email: escapedEmail }),
-          `<p style="color:red;">Database error: ${escapeHtml(error.message)}</p>`
-        )
-      )
+      .send(render(
+        { username: '', email: '', password: '' },
+        '<p style="color:green;">Registration successful!</p>'
+      ));
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res
+      .status(500)
+      .send(render(
+        { username, email, password: '' },
+        '<p style="color:red;">Registration failed due to server error.</p>'
+      ));
   }
-
-  const salt = crypto.randomBytes(16).toString('hex')
-  const hashed = hashPassword(password, salt)
-  const saltedHash = `${salt}:${hashed}`
-
-  await db.user.create({ data: { username, email, password: saltedHash } })
-
-  const success = `<p style="color:green;">Registration successful!</p>`
-  return res.send(
-    injectFeedback(injectValues(rawHtml, { username: '', email: '' }), success)
-  )
 }
 
-module.exports = { handleRegister }
+module.exports = { handleRegister };
